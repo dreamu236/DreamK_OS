@@ -4,7 +4,7 @@
 원장 1인이 **입력 최소화 → 이벤트 발생 → TASK 묶음 자동 생성 → 완료 체크로 누락 방지** 흐름으로 운영할 수 있도록, Google Sheets 기반 MVP 시트/컬럼/검증 규칙을 정의한다.
 
 ## 범위
-- 대상 시트: `CHILD`, `TASKS`, `CLASS_ASSIGNMENT`, `ROSTER`
+- 대상 시트: `CHILD`, `TASKS`, `CLASS_ASSIGNMENT`, `ROSTER`, `RULES`
 - 필수 산출물:
   - 시트 정의
   - 컬럼 정의
@@ -28,6 +28,14 @@
 ### 값 표준화 규칙
 - 드롭다운 값은 본 문서의 **정의된 enum만** 사용
 - 빈값 허용 여부는 각 컬럼의 `required`로 통제
+
+### 반배정 기준 규칙 (필수)
+- 반배정은 `age_years`를 사용하지 않고, **`school_year + birth_year` 매핑**으로 결정한다.
+- `school_year` 계산:
+  - `MONTH(admission_date) >= 3` 이면 `school_year = YEAR(admission_date)`
+  - 그 외(1~2월)면 `school_year = YEAR(admission_date) - 1`
+- `RULES`에서 `key=class_map AND school_year AND birth_year AND active=TRUE` 조건으로 매핑을 조회한다.
+- 동일 매핑에 `round_robin_group`이 있으면 해당 그룹의 `round_robin_key`를 사용해 순환 배정한다.
 
 ---
 
@@ -60,7 +68,7 @@
 | child_id | name | birth_date | admission_confirmed | admission_date | state | current_class | monthly_fee | memo |
 |---|---|---|---|---|---|---|---:|---|
 | CH-20260222-001 | 김하늘 | 2021-05-10 | FALSE |  | 상담중 |  | 350000 |  |
-| CH-20260222-002 | 이도윤 | 2020-02-03 | TRUE | 2026-03-03 | 재원 | 6세반 | 350000 | 적응 완료 |
+| CH-20260222-002 | 이도윤 | 2020-02-03 | TRUE | 2026-03-03 | 재원 | 드림반 | 350000 | 적응 완료 |
 
 ---
 
@@ -138,8 +146,8 @@
 ### 예시 행
 | assignment_id | child_id | effective_date | class_name | reason | memo |
 |---|---|---|---|---|---|
-| A-20260303-001 | CH-20260222-002 | 2026-03-03 | 6세반 | 입학 |  |
-| A-20270301-001 | CH-20260222-002 | 2027-03-01 | 7세반 | 진급 | 원장 수동 반배정 |
+| A-20260303-001 | CH-20260222-002 | 2026-03-03 | 드림반 | 입학 | school_year=2026, birth_year=2020 |
+| A-20270301-001 | CH-20260222-002 | 2027-03-01 | 새싹반 | 진급 | 원장 수동 반배정 |
 
 ---
 
@@ -162,12 +170,50 @@
 ### 예시 행
 | class_name | child_name | child_id |
 |---|---|---|
-| 6세반 | 이도윤 | CH-20260222-002 |
-| 5세반 | 김하늘 | CH-20260222-001 |
+| 드림반 | 이도윤 | CH-20260222-002 |
+| 누리반 | 김하늘 | CH-20260222-001 |
 
 ---
 
-## 5) TASK 완료 기준 (MVP 필수)
+## 5) SHEET: `RULES` (운영 규칙/매핑)
+
+### 시트 목적
+자동화에서 참조하는 규칙(반배정 매핑, 라운드로빈 포인터 등)을 테이블로 관리한다.
+
+### 컬럼 정의
+| column | type | required | example | notes |
+|---|---|---:|---|---|
+| key | text | Y | class_map | 규칙 종류 |
+| school_year | number | Y | 2026 | 반배정 적용 학년도 |
+| birth_year | number | N | 2022 | class_map에서 필수 |
+| class_group | text | N | 3세반 | 표시용 그룹명 |
+| class_name | text | N | 고운1반 | 실제 배정 반 |
+| round_robin_group | text | N | 고운반군 | 순환 배정 대상 그룹 |
+| round_robin_key | text | N | rr_2026_2022_next | 순환 포인터 키 |
+| active | checkbox | Y | TRUE | 활성 여부 |
+| value_text | text | N | 고운1반 | 일반 key-value용 확장 컬럼 |
+| memo | text | N | 2026학년도 기준 | 비고 |
+
+### class_map 조회 규칙(필수)
+- 조회 조건: `key='class_map' AND school_year={계산값} AND birth_year={출생연도} AND active=TRUE`
+- 조회 결과가 1건이면 `class_name`을 사용한다.
+- 조회 결과가 N건(예: 라운드로빈 2개 반)이면:
+  1. `round_robin_key`로 현재 인덱스를 읽는다.
+  2. 인덱스에 해당하는 행의 `class_name`으로 배정한다.
+  3. 다음 인덱스로 증가시켜 같은 `round_robin_key`에 저장한다.
+
+### 2026년 class_map 예시
+| key | school_year | birth_year | class_group | class_name | round_robin_group | round_robin_key | active | value_text | memo |
+|---|---:|---:|---|---|---|---|---|---|---|
+| class_map | 2026 | 2022 | 3세반 | 고운1반 | 고운반군 | rr_2026_2022_next | TRUE |  | 3세반 순환배정 |
+| class_map | 2026 | 2022 | 3세반 | 고운2반 | 고운반군 | rr_2026_2022_next | TRUE |  | 3세반 순환배정 |
+| class_map | 2026 | 2021 | 4세반 | 누리반 |  |  | TRUE |  | 단일 배정 |
+| class_map | 2026 | 2020 | 5세반 | 드림반 |  |  | TRUE |  | 단일 배정 |
+| rr_2026_2022_next | 2026 |  |  |  |  |  | TRUE | 0 | 다음 배정 인덱스(0-based) |
+
+---
+
+## 6) TASK 완료 기준 (MVP 필수)
 
 ### A. 명단 TASK (`category=명단`) 완료 조건
 아래 **모든 조건** 충족 시 완료 처리:
@@ -186,7 +232,7 @@
 
 ---
 
-## 6) 운영 권장 필터 뷰
+## 7) 운영 권장 필터 뷰
 - `대기 TASK`: `status=대기`
 - `안내문자 TASK`: `category=안내문자`
 - `완료 누락 점검`: `status=완료 AND completed_at is blank`

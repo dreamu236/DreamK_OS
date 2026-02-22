@@ -20,7 +20,7 @@ Director(원장) 1인이 Google Sheets에서 **입력 최소화 / 누락 없는 
 1. 원장이 `CHILD` 시트에서 입학확정 체크를 한다.
 2. 자동화 트리거가 동작하여 `TASKS`에 입학확정 기본 6개 TASK를 생성한다.
 3. 원장은 `TASKS` 필터뷰(`status=대기`)에서 대상 원아 업무를 순서대로 처리한다.
-4. `명단` TASK 처리 시 `ROSTER`에 원아를 반에 배치한다.
+4. `명단` TASK 처리 시 `admission_date`로 계산한 `school_year`와 `birth_year`를 기준으로 `RULES(class_map, active=TRUE)`를 조회해 `ROSTER`에 반 배치한다 (`age_years` 미사용).
 5. `안내문자` TASK 처리 시 `sms_status`를 `예약` 또는 `발송완료`로 변경한다.
 6. 각 TASK 완료 시 `status=완료`, `completed_at` 기록.
 
@@ -52,7 +52,7 @@ Director(원장) 1인이 Google Sheets에서 **입력 최소화 / 누락 없는 
 
 ### 실행 단계
 1. 진급 이벤트 TASK(`진급-반배정`) 생성.
-2. 원장이 `CLASS_ASSIGNMENT`에 신규 배정 이력 입력 (`reason=진급`).
+2. 원장이 `RULES`의 해당 학년도 `class_map(active=TRUE)`를 확인하고 `CLASS_ASSIGNMENT`에 신규 배정 이력 입력 (`reason=진급`).
 3. `CHILD.current_class` 최신화.
 4. 필요 시 `ROSTER` 재정렬/갱신.
 5. 진급 TASK 완료 처리.

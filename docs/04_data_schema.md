@@ -1,12 +1,13 @@
 # 데이터 스키마 (MVP)
 
 ## 개요
-MVP는 Google Sheets 4개 시트(`CHILD`, `TASKS`, `CLASS_ASSIGNMENT`, `ROSTER`)를 논리 테이블로 사용한다. 이 문서는 테이블 관계, 키, 제약 조건을 정의한다.
+MVP는 Google Sheets 5개 시트(`CHILD`, `TASKS`, `CLASS_ASSIGNMENT`, `ROSTER`, `RULES`)를 논리 테이블로 사용한다. 이 문서는 테이블 관계, 키, 제약 조건을 정의한다.
 
 ## 논리 ER 관계
 - `CHILD (1) ── (N) TASKS`
 - `CHILD (1) ── (N) CLASS_ASSIGNMENT`
 - `CHILD (1) ── (N) ROSTER` *(운영상 최신 1건이 일반적이나, 출력 이력 유지 시 N건 가능)*
+- `RULES (1) ── (N) CLASS_ASSIGNMENT` *(class_map 조회 기준)*
 
 ---
 
@@ -94,6 +95,40 @@ MVP는 Google Sheets 4개 시트(`CHILD`, `TASKS`, `CLASS_ASSIGNMENT`, `ROSTER`)
 | class_name | text | N | CK | 반명 |
 | child_name | text | N |  | 표시명 |
 | child_id | text | N | FK/CK | 원아 ID |
+
+---
+
+## 5) TABLE: RULES
+
+### Candidate Key
+- `(key, school_year, birth_year, class_name, active)` *(class_map에서 사용)*
+
+### 컬럼
+| column | type | null | key | notes |
+|---|---|---|---|---|
+| key | text | N | CK | 규칙 키 (`class_map`, `rr_2026_2022_next` 등) |
+| school_year | number | N | CK | 적용 학년도 |
+| birth_year | number | Y | CK | `class_map`에서 필수 |
+| class_group | text | Y |  | 표시 그룹명 (예: 3세반) |
+| class_name | text | Y | CK | 배정 반 |
+| round_robin_group | text | Y |  | 순환 배정 대상 그룹 |
+| round_robin_key | text | Y |  | 순환 포인터 참조 키 |
+| active | boolean | N | CK | 활성 여부 |
+| value_text | text | Y |  | key-value 확장값 |
+| memo | text | Y |  | 비고 |
+
+### CHECK 제약(운영 규칙)
+- `key='class_map'` 이면 `school_year`, `birth_year`, `class_name`, `active` 필수
+- class_map 조회는 `key='class_map' AND active=TRUE`를 기본 필터로 사용
+- 반배정은 `age_years`가 아니라 `(school_year, birth_year)`로만 결정
+- `school_year` 계산은 `admission_date` 기준:
+  - `MONTH(admission_date) >= 3` → `YEAR(admission_date)`
+  - `MONTH(admission_date) < 3` → `YEAR(admission_date)-1`
+
+### 2026 class_map 기준
+- `school_year=2026, birth_year=2022` → `3세반` (`고운1반`, `고운2반`, `round_robin_key='rr_2026_2022_next'`)
+- `school_year=2026, birth_year=2021` → `4세반` (`누리반`)
+- `school_year=2026, birth_year=2020` → `5세반` (`드림반`)
 
 ---
 

@@ -38,6 +38,35 @@ Google Sheets + Apps Script 기준으로 이벤트 감지, TASK 생성, 중복 �
 
 ---
 
+
+## Trigger 1.1 — 입학확정 시 반배정 class_map 조회
+
+### 이벤트
+- `CHILD.admission_confirmed`가 `FALSE → TRUE`로 변경되었고, `admission_date`가 존재함
+
+### 계산 규칙
+1. `birth_year = YEAR(CHILD.birth_date)`
+2. `school_year` 계산
+   - `MONTH(admission_date) >= 3` 이면 `school_year = YEAR(admission_date)`
+   - 아니면 `school_year = YEAR(admission_date) - 1`
+3. `RULES`에서 아래 조건으로 class_map 조회
+   - `key='class_map'`
+   - `school_year={계산된 school_year}`
+   - `birth_year={계산된 birth_year}`
+   - `active=TRUE`
+
+### 액션
+- 조회 결과가 1건이면 해당 `class_name`으로 `CLASS_ASSIGNMENT`/`ROSTER` 반영
+- 조회 결과가 다건이면 `round_robin_key`로 순환 배정
+  - 예: `rr_2026_2022_next` 값을 읽어 인덱스 선택
+  - 선택된 행의 `class_name` 사용 후 인덱스를 다음 값으로 갱신
+- 조회 결과가 0건이면 반배정 TASK를 `대기` 유지하고 `memo`에 `RULES class_map 미정의` 기록
+
+### 2026 기준 매핑
+- `birth_year=2022` → `고운1반/고운2반` (round-robin, `rr_2026_2022_next`)
+- `birth_year=2021` → `누리반`
+- `birth_year=2020` → `드림반`
+
 ## Trigger 2 — 안내문자 TASK 상태 보정
 
 ### 이벤트
