@@ -6,6 +6,7 @@ files=(
   "docs/04_data_schema.md"
   "docs/06_google_sheets_mvp.md"
   "docs/07_automation_triggers.md"
+  "docs/09_setup_guide.md"
 )
 
 for f in "${files[@]}"; do
@@ -35,5 +36,11 @@ check_contains docs/06_google_sheets_mvp.md "안내문자 TASK"
 
 check_contains docs/07_automation_triggers.md "Trigger 1 — 입학확정 TASK 자동 생성"
 check_contains docs/07_automation_triggers.md "Trigger 4 — 진급 시즌 작업 생성"
+
+check_contains docs/09_setup_guide.md "CHILD"
+check_contains docs/09_setup_guide.md "TASKS"
+check_contains docs/09_setup_guide.md "CLASS_ASSIGNMENT"
+check_contains docs/09_setup_guide.md "ROSTER"
+check_contains docs/09_setup_guide.md "RULES"
 
 echo "scripts/validate.sh: PASS"
