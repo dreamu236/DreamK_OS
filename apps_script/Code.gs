@@ -11,6 +11,8 @@ const SHEETS = {
   RULES: 'RULES',
 };
 
+const DEFAULT_2026_RR_KEY = 'rr_2026_2022_next';
+
 const ADMISSION_TASK_CATEGORIES = [
   '명단',
   '원비',

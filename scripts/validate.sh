@@ -7,6 +7,14 @@ files=(
   "docs/06_google_sheets_mvp.md"
   "docs/07_automation_triggers.md"
   "docs/09_setup_guide.md"
+  "apps_script/Code.gs"
+  "templates/headers_child.csv"
+  "templates/headers_tasks.csv"
+  "templates/headers_class_assignment.csv"
+  "templates/headers_roster.csv"
+  "templates/headers_rules.csv"
+  "templates/rules_2026.tsv"
+  "templates/sample_child_rows.tsv"
 )
 
 for f in "${files[@]}"; do
@@ -42,5 +50,15 @@ check_contains docs/09_setup_guide.md "TASKS"
 check_contains docs/09_setup_guide.md "CLASS_ASSIGNMENT"
 check_contains docs/09_setup_guide.md "ROSTER"
 check_contains docs/09_setup_guide.md "RULES"
+
+check_contains apps_script/Code.gs "rr_2026_2022_next"
+check_contains apps_script/Code.gs "ADMISSION_TASK_CATEGORIES"
+check_contains apps_script/Code.gs "CLASS_ASSIGNMENT"
+
+check_contains templates/rules_2026.tsv $'class_map\t2026\t2022\t3세반\t고운1반'
+check_contains templates/rules_2026.tsv $'class_map\t2026\t2022\t3세반\t고운2반'
+check_contains templates/rules_2026.tsv $'class_map\t2026\t2021\t4세반\t누리반'
+check_contains templates/rules_2026.tsv $'class_map\t2026\t2020\t5세반\t드림반'
+check_contains templates/rules_2026.tsv $'rr_2026_2022_next\t2026'
 
 echo "scripts/validate.sh: PASS"
