@@ -1,0 +1,6 @@
+key	school_year	birth_year	class_group	class_name	round_robin_group	round_robin_key	active	value_text	memo
+class_map	2026	2022	3세반	고운1반	고운반군	rr_2026_2022_next	TRUE		2026 3세반 순환배정
+class_map	2026	2022	3세반	고운2반	고운반군	rr_2026_2022_next	TRUE		2026 3세반 순환배정
+class_map	2026	2021	4세반	누리반			TRUE		2026 단일배정
+class_map	2026	2020	5세반	드림반			TRUE		2026 단일배정
+rr_2026_2022_next	2026						TRUE	0	round-robin 포인터(0부터 시작)

@@ -1,0 +1,4 @@
+child_id	name	birth_date	admission_confirmed	admission_date	state	current_class	monthly_fee	memo
+CH-TEST-20260222-001	테스트원아1	2022-04-10	FALSE	2026-03-04	상담중		350000	스모크테스트용
+CH-TEST-20260222-002	테스트원아2	2021-06-12	FALSE	2026-03-04	상담중		350000	스모크테스트용
+CH-TEST-20260222-003	테스트원아3	2020-02-15	FALSE	2026-03-04	상담중		350000	스모크테스트용
